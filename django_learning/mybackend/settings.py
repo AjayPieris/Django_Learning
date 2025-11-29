@@ -128,9 +128,16 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Where the files are physically stored on your computer
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# The URL address to access them (e.g., http://localhost:8000/media/...)
+MEDIA_URL = '/media/'
+
 # Allow React (Port 3000) to talk to Django
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
 ]
+

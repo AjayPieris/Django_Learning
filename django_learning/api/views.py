@@ -20,20 +20,29 @@ def say_hello(request):
 @csrf_exempt  # <--- This tells Django: "Don't check for a security card on this specific view"
 def add_project(request):
     if request.method == 'POST':
-        # 1. Decode the JSON data sent by React
-        data = json.loads(request.body)
+        # 1. Get text data from the 'Form' (not JSON body)
+        name = request.POST.get('name')
+        language = request.POST.get('language')
+        description = request.POST.get('description')
         
-        # 2. Create the new Project in the database
+        # 2. Get the Image from 'FILES'
+        image = request.FILES.get('image')  # This might be None if they didn't upload one
+
+        # 3. Save to Database
         new_project = Project.objects.create(
-            name=data['name'],
-            language=data['language'],
-            description=data['description']
+            name=name,
+            language=language,
+            description=description,
+            image=image  # Django handles saving the file to the 'media' folder automatically!
         )
         
-        # 3. Send back a success message
-        return JsonResponse({"message": "Project added successfully!", "id": new_project.id})
+        return JsonResponse({
+            "message": "Project added successfully!", 
+            "id": new_project.id,
+            "image_url": new_project.image.url if new_project.image else None
+        })
     
-    return JsonResponse({"error": "Only POST requests are allowed"}, status=400)
+    return JsonResponse({"error": "POST request required"}, status=400)
 
 # ... keep your existing imports and functions ...
 

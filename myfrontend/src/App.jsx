@@ -1,108 +1,233 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useState, useEffect } from "react";
+import "./App.css";
 
 function App() {
-  const [projects, setProjects] = useState([])
-  
+  const [projects, setProjects] = useState([]);
+
   // --- AUTH STATE ---
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoggedIn, setIsLoggedIn] = useState(false) // Keeps track: Are we logged in?
-  const [user, setUser] = useState("") // Stores the username if logged in
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  // const [isLoggedIn, setIsLoggedIn] = useState(false) // Keeps track: Are we logged in?
+
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    localStorage.getItem("isLoggedIn") === "true"
+  );
+
+  // const [user, setUser] = useState("") // Stores the username if logged in
+  const [user, setUser] = useState(localStorage.getItem("username") || "");
 
   // --- PROJECT FORM STATE ---
-  const [projName, setProjName] = useState("")
-  const [projLang, setProjLang] = useState("")
-  const [projDesc, setProjDesc] = useState("")
+  const [projName, setProjName] = useState("");
+  const [projLang, setProjLang] = useState("");
+  const [projDesc, setProjDesc] = useState("");
+  const [projImage, setProjImage] = useState(null);
 
   // 1. Fetch Projects (Only works if we want it to)
   async function fetchProjects() {
-    const response = await fetch('http://127.0.0.1:8000/hello/')
-    const data = await response.json()
-    setProjects(data)
+    const response = await fetch("http://127.0.0.1:8000/hello/");
+    const data = await response.json();
+    setProjects(data);
   }
 
   useEffect(() => {
-    fetchProjects()
-  }, [])
+    fetchProjects();
+  }, []);
 
   // 2. THE NEW LOGIN FUNCTION
   async function handleLogin(e) {
-    e.preventDefault()
-    
-    const response = await fetch('http://127.0.0.1:8000/login/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    })
+    e.preventDefault();
 
-    const data = await response.json()
+    const response = await fetch("http://127.0.0.1:8000/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
 
     if (response.ok) {
       // If Django says "Yes"
-      setIsLoggedIn(true)
-      setUser(data.username)
-      alert("Welcome " + data.username + "!")
+      // setIsLoggedIn(true)
+      // setUser(data.username)
+      // alert("Welcome " + data.username + "!")
+
+      // Save to browser memory
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", data.username);
+
+      // Update state
+      setIsLoggedIn(true);
+      setUser(data.username);
+      alert("Welcome " + data.username + "!");
     } else {
       // If Django says "No"
-      alert("Login Failed: " + data.error)
+      alert("Login Failed: " + data.error);
     }
   }
 
   // 3. Add Project Function
   async function handleAddProject(e) {
-    e.preventDefault()
-    const projectData = { name: projName, language: projLang, description: projDesc }
-    await fetch('http://127.0.0.1:8000/add-project/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(projectData),
-    })
-    setProjName(""); setProjLang(""); setProjDesc("");
-    fetchProjects() 
+    e.preventDefault();
+
+    // 1. Create a "FormData" package
+    const formData = new FormData();
+    formData.append("name", projName);
+    formData.append("language", projLang);
+    formData.append("description", projDesc);
+
+    // Only append image if the user selected one
+    if (projImage) {
+      formData.append("image", projImage);
+    }
+
+    // 2. Send the package
+    // Note: We REMOVED 'Content-Type': 'application/json'
+    // The browser sets the correct boundary headers automatically for files.
+    await fetch("http://127.0.0.1:8000/add-project/", {
+      method: "POST",
+      body: formData,
+    });
+
+    // 3. Cleanup
+    setProjName("");
+    setProjLang("");
+    setProjDesc("");
+    setProjImage(null);
+
+    // Reset the file input manually (a small React trick)
+    document.getElementById("fileInput").value = "";
+
+    fetchProjects();
   }
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      
       {/* --- SHOW LOGIN SCREEN IF NOT LOGGED IN --- */}
       {!isLoggedIn ? (
-        <div style={{ border: "2px solid blue", padding: "20px", borderRadius: "10px", maxWidth: "300px" }}>
+        <div
+          style={{
+            border: "2px solid blue",
+            padding: "20px",
+            borderRadius: "10px",
+            maxWidth: "300px",
+          }}
+        >
           <h2>Please Login</h2>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
-            <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-            <button type="submit" style={{ background: "blue", color: "white" }}>Login</button>
+          <form
+            onSubmit={handleLogin}
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
+            <input
+              placeholder="Username"
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="submit"
+              style={{ background: "blue", color: "white" }}
+            >
+              Login
+            </button>
           </form>
         </div>
       ) : (
         /* --- SHOW DASHBOARD IF LOGGED IN --- */
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <h1>Welcome, {user}!</h1>
-            <button onClick={() => setIsLoggedIn(false)} style={{ background: "red", color: "white" }}>Logout</button>
+            <button
+              onClick={() => {
+                localStorage.removeItem("isLoggedIn");
+                localStorage.removeItem("username");
+                setIsLoggedIn(false);
+                setUser("");
+              }}
+              style={{ background: "red", color: "white" }}
+            >
+              Logout
+            </button>
           </div>
 
           {/* Add Project Form */}
-          <div style={{ background: "#f0f0f0", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
-             <h3>Add New Project</h3>
-             <input placeholder="Name" value={projName} onChange={(e) => setProjName(e.target.value)} style={{marginRight: "5px"}}/>
-             <input placeholder="Language" value={projLang} onChange={(e) => setProjLang(e.target.value)} style={{marginRight: "5px"}}/>
-             <input placeholder="Description" value={projDesc} onChange={(e) => setProjDesc(e.target.value)} />
-             <button onClick={handleAddProject} style={{ marginLeft: "10px" }}>Add</button>
+          <div
+            style={{
+              background: "#f0f0f0",
+              padding: "15px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+            }}
+          >
+            <h3>Add New Project</h3>
+            <input
+              placeholder="Name"
+              value={projName}
+              onChange={(e) => setProjName(e.target.value)}
+              style={{ marginRight: "5px" }}
+            />
+            <input
+              placeholder="Language"
+              value={projLang}
+              onChange={(e) => setProjLang(e.target.value)}
+              style={{ marginRight: "5px" }}
+            />
+            <input
+              placeholder="Description"
+              value={projDesc}
+              onChange={(e) => setProjDesc(e.target.value)}
+            />
+            {/* NEW: File Input */}
+            <input
+              type="file"
+              id="fileInput"
+              onChange={(e) => setProjImage(e.target.files[0])}
+              style={{ marginTop: "10px" }}
+            />
+            <button onClick={handleAddProject} style={{ marginLeft: "10px" }}>
+              Add
+            </button>
           </div>
 
           {/* List Projects */}
           {projects.map((project) => (
-            <div key={project.id} style={{ border: "1px solid #ddd", margin: "10px", padding: "10px" }}>
+            <div
+              key={project.id}
+              style={{
+                border: "1px solid #ddd",
+                margin: "10px",
+                padding: "10px",
+              }}
+            >
               <h3>{project.name}</h3>
-              <p>{project.language}</p>
+
+              {/* Show image if it exists */}
+              {project.image && (
+                <img
+                  src={`http://127.0.0.1:8000/media/${project.image}`}
+                  alt={project.name}
+                  style={{ width: "200px", borderRadius: "8px" }}
+                />
+              )}
+
+              <p>
+                <strong>Language:</strong> {project.language}
+              </p>
+              <p>{project.description}</p>
             </div>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
