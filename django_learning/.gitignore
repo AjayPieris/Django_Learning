@@ -1,0 +1,17 @@
+# 1. Ignore the Virtual Environment (Crucial!)
+# This folder is huge and specific to your computer.
+venv/
+env/
+.env
+
+# 2. Ignore Python "Compiled" files
+# These are temporary files Python creates to run faster.
+*.pyc
+__pycache__/
+
+# 3. Ignore the Database
+# You usually don't want to push your local test data to GitHub.
+db.sqlite3
+
+# 4. Ignore System files
+.DS_Store

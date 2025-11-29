@@ -1,0 +1,10 @@
+from django.contrib import admin
+from django.urls import path
+from api.views import say_hello  # <--- Import your view
+from api.views import add_project  # <--- Import your view
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('hello/', say_hello),   # <--- Add this path
+    path('add_project/', add_project),  # <--- Add this path
+]
