@@ -1,4 +1,5 @@
 import json
+from django.contrib.auth import authenticate # <--- The Tool to check passwords
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from .models import Project  # <--- Import your Blueprint (Model)
@@ -33,3 +34,25 @@ def add_project(request):
         return JsonResponse({"message": "Project added successfully!", "id": new_project.id})
     
     return JsonResponse({"error": "Only POST requests are allowed"}, status=400)
+
+# ... keep your existing imports and functions ...
+
+@csrf_exempt
+def login_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        
+        # 1. Get the username/password from React
+        username = data.get('username')
+        password = data.get('password')
+        
+        # 2. Ask Django: "Does this user exist?"
+        # authenticate() returns the User object if correct, or None if wrong.
+        user = authenticate(username=username, password=password)
+        
+        if user is not None:
+            return JsonResponse({"message": "Login Successful!", "username": user.username})
+        else:
+            return JsonResponse({"error": "Invalid credentials"}, status=400)
+    
+    return JsonResponse({"error": "POST request required"}, status=400)
