@@ -6,5 +6,5 @@ from api.views import add_project  # <--- Import your view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('hello/', say_hello),   # <--- Add this path
-    path('add_project/', add_project),  # <--- Add this path
+    path('add-project/', add_project),  # <--- Add this path
 ]
