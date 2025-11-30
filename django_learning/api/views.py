@@ -65,3 +65,19 @@ def login_view(request):
             return JsonResponse({"error": "Invalid credentials"}, status=400)
     
     return JsonResponse({"error": "POST request required"}, status=400)
+
+@csrf_exempt
+def delete_project(request, project_id):
+    if request.method == 'DELETE':
+        try:
+            # 1. Find the project with this specific ID
+            project = Project.objects.get(id=project_id)
+            
+            # 2. Delete it from the database
+            project.delete()
+            
+            return JsonResponse({"message": "Project deleted successfully!"})
+        except Project.DoesNotExist:
+            return JsonResponse({"error": "Project not found"}, status=404)
+            
+    return JsonResponse({"error": "DELETE request required"}, status=400)

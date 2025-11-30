@@ -108,6 +108,21 @@ function isVideo(url) {
   return url.toLowerCase().match(/\.(mp4|webm|ogg)$/);
 }
 
+// Function to delete a project
+  async function handleDelete(id) {
+    // 1. Ask for confirmation (Safety first!)
+    if (confirm("Are you sure you want to delete this?")) {
+      
+      // 2. Send the DELETE command to Django
+      await fetch(`http://127.0.0.1:8000/delete-project/${id}/`, {
+        method: 'DELETE',
+      })
+
+      // 3. Refresh the list to show it's gone
+      fetchProjects()
+    }
+  }
+
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       {/* --- SHOW LOGIN SCREEN IF NOT LOGGED IN --- */}
@@ -212,6 +227,16 @@ function isVideo(url) {
                key={project.id || project.name}
                style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "8px", marginBottom: "10px" }}
              >
+                {/* Delete Button */}
+                <button
+                onClick={()=> handleDelete(project.id)}
+                style={{
+                  position: "absolute",
+                  background: "red",
+                  right: "160px",
+
+                }}
+                >X</button>
                <h4>{project.name}</h4>
                <p>
                  <strong>Language:</strong> {project.language}
