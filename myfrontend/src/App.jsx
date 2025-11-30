@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./App.css";
+import "./app.css";
 
 function App() {
   const [projects, setProjects] = useState([]);
@@ -22,6 +22,7 @@ function App() {
   const [projDesc, setProjDesc] = useState("");
   const [projImage, setProjImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false); // Default = Closed
 
   // 1. Fetch Projects (Only works if we want it to)
   async function fetchProjects() {
@@ -129,6 +130,10 @@ function App() {
     setProjLang(project.language);
     setProjDesc(project.description);
     setEditingId(project.id); // Turn on "Edit Mode"
+    setIsFormOpen(true); // <--- Force the form to open!
+
+    // Scroll to top so user sees the form
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // 2. Send the updates to Django
@@ -157,197 +162,190 @@ function App() {
   }
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      {/* --- SHOW LOGIN SCREEN IF NOT LOGGED IN --- */}
-      {!isLoggedIn ? (
-        <div
-          style={{
-            border: "2px solid blue",
-            padding: "20px",
-            borderRadius: "10px",
-            maxWidth: "300px",
-          }}
-        >
-          <h2>Please Login</h2>
-          <form
-            onSubmit={handleLogin}
-            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-          >
-            <input
-              placeholder="Username"
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
-            />
+    <div className="app">
+      {/* --- NAVBAR --- */}
+      <nav className="navbar">
+        <h1>CRUD</h1>
+        {isLoggedIn && (
+          <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+            <span>Hello, {user}</span>
             <button
-              type="submit"
-              style={{ background: "blue", color: "white" }}
-            >
-              Login
-            </button>
-          </form>
-        </div>
-      ) : (
-        /* --- SHOW DASHBOARD IF LOGGED IN --- */
-        <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <h1>Welcome, {user}!</h1>
-            <button
+              className="btn btn-danger"
               onClick={() => {
                 localStorage.removeItem("isLoggedIn");
                 localStorage.removeItem("username");
                 setIsLoggedIn(false);
                 setUser("");
               }}
-              style={{ background: "red", color: "white" }}
             >
               Logout
             </button>
           </div>
+        )}
+      </nav>
 
-          {/* Add Project Form */}
+      <div className="container">
+        {/* --- LOGIN SCREEN --- */}
+        {!isLoggedIn ? (
           <div
-            style={{
-              background: "#f0f0f0",
-              padding: "15px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-            }}
+            className="form-box"
+            style={{ textAlign: "center", marginTop: "100px" }}
           >
-            <h3>Add New Project</h3>
-            <input
-              placeholder="Name"
-              value={projName}
-              onChange={(e) => setProjName(e.target.value)}
-              style={{ marginRight: "5px" }}
-            />
-            <input
-              placeholder="Language"
-              value={projLang}
-              onChange={(e) => setProjLang(e.target.value)}
-              style={{ marginRight: "5px" }}
-            />
-            <input
-              placeholder="Description"
-              value={projDesc}
-              onChange={(e) => setProjDesc(e.target.value)}
-            />
-            {/* NEW: File Input */}
-            <input
-              type="file"
-              id="fileInput"
-              onChange={(e) => setProjImage(e.target.files[0])}
-              style={{ marginTop: "10px" }}
-            />
-            {/* If editingId is not null, use handleUpdate. Otherwise use handleAddProject */}
-            {editingId ? (
-              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                <button
-                  onClick={handleUpdate}
-                  style={{ background: "green", color: "white" }}
-                >
-                  Update Project
-                </button>
-
-                {/* Cancel Button in case they change their mind */}
+            <h2>Please Login</h2>
+            <form onSubmit={handleLogin} className="form-inputs">
+              <input
+                placeholder="Username"
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button type="submit" className="btn btn-primary">
+                Login
+              </button>
+            </form>
+          </div>
+        ) : (
+          /* --- DASHBOARD --- */
+          <div>
+            {/* 1. The "Show Form" Button (Only visible if form is CLOSED) */}
+            {!isFormOpen && (
+              <div style={{ textAlign: "center", marginBottom: "30px" }}>
                 <button
                   onClick={() => {
-                    setEditingId(null);
+                    setIsFormOpen(true);
+                    setEditingId(null); // Ensure we are in "Add Mode"
                     setProjName("");
                     setProjLang("");
-                    setProjDesc("");
+                    setProjDesc(""); // Clear old data
                   }}
-                  style={{ background: "gray", color: "white" }}
+                  className="btn btn-primary"
+                  style={{ fontSize: "18px", padding: "15px 30px" }}
                 >
-                  Cancel
+                  + Create New Project
                 </button>
               </div>
-            ) : (
-              <button onClick={handleAddProject} style={{ marginTop: "10px" }}>
-                Add Project
-              </button>
             )}
-          </div>
 
-          {/* Render projects list */}
-          <div>
-            {projects.map((project) => (
-              <div
-                key={project.id || project.name}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "10px",
-                  borderRadius: "8px",
-                  marginBottom: "10px",
-                }}
-              >
-                {/* --- EDIT BUTTON --- */}
-                <button
-                  onClick={() => startEditing(project)}
-                  style={{
-                    position: "absolute",
-                    background: "green",
-                    right: "230px",
-                  }}
-                >
-                  Edit
-                </button>
-                {/* Delete Button */}
-                <button
-                  onClick={() => handleDelete(project.id)}
-                  style={{
-                    position: "absolute",
-                    background: "red",
-                    right: "160px",
-                  }}
-                >
-                  X
-                </button>
-                <h4>{project.name}</h4>
-                <p>
-                  <strong>Language:</strong> {project.language}
-                </p>
-                <p>{project.description}</p>
+            {/* 2. The Form (Only visible if form is OPEN) */}
+            {isFormOpen && (
+              <div className="form-box">
+                <h3>{editingId ? "Edit Project" : "Add New Project"}</h3>
+                <div className="form-inputs">
+                  <input
+                    placeholder="Project Name"
+                    value={projName}
+                    onChange={(e) => setProjName(e.target.value)}
+                  />
+                  <input
+                    placeholder="Language (e.g. Python)"
+                    value={projLang}
+                    onChange={(e) => setProjLang(e.target.value)}
+                  />
+                  <textarea
+                    placeholder="Description"
+                    rows="3"
+                    value={projDesc}
+                    onChange={(e) => setProjDesc(e.target.value)}
+                  />
+                  <input
+                    type="file"
+                    id="fileInput"
+                    onChange={(e) => setProjImage(e.target.files[0])}
+                  />
 
-                {project.image && (
-                  <div style={{ marginTop: "10px" }}>
-                    {/* LOGIC: Is it a video? */}
-                    {isVideo(project.image) ? (
-                      <video
-                        controls
-                        width="100%"
-                        style={{ borderRadius: "8px" }}
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    {/* Submit Button */}
+                    {editingId ? (
+                      <button
+                        onClick={handleUpdate}
+                        className="btn btn-success"
+                        style={{ flex: 1 }}
                       >
-                        <source
-                          src={`http://127.0.0.1:8000/media/${project.image}`}
-                          type="video/mp4"
-                        />
-                        Your browser does not support the video tag.
-                      </video>
+                        Update Project
+                      </button>
                     ) : (
-                      /* LOGIC: No? Then it must be an image */
-                      <img
-                        src={`http://127.0.0.1:8000/media/${project.image}`}
-                        alt={project.name}
-                        style={{ width: "200px", borderRadius: "8px" }}
-                      />
+                      <button
+                        onClick={handleAddProject}
+                        className="btn btn-primary"
+                        style={{ flex: 1 }}
+                      >
+                        Save Project
+                      </button>
                     )}
+
+                    {/* Cancel Button - Closes the form */}
+                    <button
+                      onClick={() => {
+                        setIsFormOpen(false); // <--- Close the form
+                        setEditingId(null);
+                        setProjName("");
+                        setProjLang("");
+                        setProjDesc("");
+                      }}
+                      className="btn btn-warning"
+                      style={{ flex: 1 }}
+                    >
+                      Cancel
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
-            ))}
+            )}
+            {/* --- PROJECT GRID --- */}
+            <div className="project-grid">
+              {projects.map((project) => (
+                <div key={project.id} className="card">
+                  {/* Action Buttons */}
+                  <button
+                    onClick={() => handleDelete(project.id)}
+                    className="action-btn delete-btn"
+                  >
+                    X
+                  </button>
+                  <button
+                    onClick={() => startEditing(project)}
+                    className="action-btn edit-btn"
+                  >
+                    ✎
+                  </button>
+
+                  {/* Media Display (Video/Image) */}
+                  {project.image && (
+                    <div className="media-container">
+                      {isVideo(project.image) ? (
+                        <video controls className="card-media">
+                          <source
+                            src={`http://127.0.0.1:8000/media/${project.image}`}
+                            type="video/mp4"
+                          />
+                        </video>
+                      ) : (
+                        <img
+                          src={`http://127.0.0.1:8000/media/${project.image}`}
+                          alt={project.name}
+                          className="card-media"
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Text Content */}
+                  <div className="card-content">
+                    <span className="card-badge">{project.language}</span>
+                    <h3 className="card-title">{project.name}</h3>
+                    <p style={{ color: "#666", lineHeight: "1.5" }}>
+                      {project.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
