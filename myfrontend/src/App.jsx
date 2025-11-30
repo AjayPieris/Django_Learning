@@ -21,6 +21,7 @@ function App() {
   const [projLang, setProjLang] = useState("");
   const [projDesc, setProjDesc] = useState("");
   const [projImage, setProjImage] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   // 1. Fetch Projects (Only works if we want it to)
   async function fetchProjects() {
@@ -101,26 +102,58 @@ function App() {
   }
 
   // Helper to check if a file is a video
-function isVideo(url) {
-  // If no URL, return false
-  if (!url) return false;
-  // Check if it ends with .mp4, .webm, or .ogg
-  return url.toLowerCase().match(/\.(mp4|webm|ogg)$/);
-}
+  function isVideo(url) {
+    // If no URL, return false
+    if (!url) return false;
+    // Check if it ends with .mp4, .webm, or .ogg
+    return url.toLowerCase().match(/\.(mp4|webm|ogg)$/);
+  }
 
-// Function to delete a project
+  // Function to delete a project
   async function handleDelete(id) {
     // 1. Ask for confirmation (Safety first!)
     if (confirm("Are you sure you want to delete this?")) {
-      
       // 2. Send the DELETE command to Django
       await fetch(`http://127.0.0.1:8000/delete-project/${id}/`, {
-        method: 'DELETE',
-      })
+        method: "DELETE",
+      });
 
       // 3. Refresh the list to show it's gone
-      fetchProjects()
+      fetchProjects();
     }
+  }
+
+  // 1. Fill the form with existing data
+  function startEditing(project) {
+    setProjName(project.name);
+    setProjLang(project.language);
+    setProjDesc(project.description);
+    setEditingId(project.id); // Turn on "Edit Mode"
+  }
+
+  // 2. Send the updates to Django
+  async function handleUpdate() {
+    const formData = new FormData();
+    formData.append("name", projName);
+    formData.append("language", projLang);
+    formData.append("description", projDesc);
+    if (projImage) {
+      formData.append("image", projImage);
+    }
+
+    await fetch(`http://127.0.0.1:8000/update-project/${editingId}/`, {
+      method: "POST",
+      body: formData,
+    });
+
+    // Cleanup
+    setProjName("");
+    setProjLang("");
+    setProjDesc("");
+    setProjImage(null);
+    setEditingId(null); // Turn off "Edit Mode"
+    document.getElementById("fileInput").value = "";
+    fetchProjects();
   }
 
   return (
@@ -215,56 +248,105 @@ function isVideo(url) {
               onChange={(e) => setProjImage(e.target.files[0])}
               style={{ marginTop: "10px" }}
             />
-            <button onClick={handleAddProject} style={{ marginLeft: "10px" }}>
-              Add
-            </button>
+            {/* If editingId is not null, use handleUpdate. Otherwise use handleAddProject */}
+            {editingId ? (
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <button
+                  onClick={handleUpdate}
+                  style={{ background: "green", color: "white" }}
+                >
+                  Update Project
+                </button>
+
+                {/* Cancel Button in case they change their mind */}
+                <button
+                  onClick={() => {
+                    setEditingId(null);
+                    setProjName("");
+                    setProjLang("");
+                    setProjDesc("");
+                  }}
+                  style={{ background: "gray", color: "white" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button onClick={handleAddProject} style={{ marginTop: "10px" }}>
+                Add Project
+              </button>
+            )}
           </div>
 
-         {/* Render projects list */}
-         <div>
-           {projects.map((project) => (
-             <div
-               key={project.id || project.name}
-               style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "8px", marginBottom: "10px" }}
-             >
+          {/* Render projects list */}
+          <div>
+            {projects.map((project) => (
+              <div
+                key={project.id || project.name}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  marginBottom: "10px",
+                }}
+              >
+                {/* --- EDIT BUTTON --- */}
+                <button
+                  onClick={() => startEditing(project)}
+                  style={{
+                    position: "absolute",
+                    background: "green",
+                    right: "230px",
+                  }}
+                >
+                  Edit
+                </button>
                 {/* Delete Button */}
                 <button
-                onClick={()=> handleDelete(project.id)}
-                style={{
-                  position: "absolute",
-                  background: "red",
-                  right: "160px",
+                  onClick={() => handleDelete(project.id)}
+                  style={{
+                    position: "absolute",
+                    background: "red",
+                    right: "160px",
+                  }}
+                >
+                  X
+                </button>
+                <h4>{project.name}</h4>
+                <p>
+                  <strong>Language:</strong> {project.language}
+                </p>
+                <p>{project.description}</p>
 
-                }}
-                >X</button>
-               <h4>{project.name}</h4>
-               <p>
-                 <strong>Language:</strong> {project.language}
-               </p>
-               <p>{project.description}</p>
-
-               {project.image && (
-                 <div style={{ marginTop: "10px" }}>
-                   {/* LOGIC: Is it a video? */}
-                   {isVideo(project.image) ? (
-                     <video controls width="100%" style={{ borderRadius: "8px" }}>
-                       <source src={`http://127.0.0.1:8000/media/${project.image}`} type="video/mp4" />
-                       Your browser does not support the video tag.
-                     </video>
-                   ) : (
-                     /* LOGIC: No? Then it must be an image */
-                     <img
-                       src={`http://127.0.0.1:8000/media/${project.image}`}
-                       alt={project.name}
-                       style={{ width: "200px", borderRadius: "8px" }}
-                     />
-                   )}
-                 </div>
-               )}
-             </div>
-           ))}
-         </div>
-       </div>
+                {project.image && (
+                  <div style={{ marginTop: "10px" }}>
+                    {/* LOGIC: Is it a video? */}
+                    {isVideo(project.image) ? (
+                      <video
+                        controls
+                        width="100%"
+                        style={{ borderRadius: "8px" }}
+                      >
+                        <source
+                          src={`http://127.0.0.1:8000/media/${project.image}`}
+                          type="video/mp4"
+                        />
+                        Your browser does not support the video tag.
+                      </video>
+                    ) : (
+                      /* LOGIC: No? Then it must be an image */
+                      <img
+                        src={`http://127.0.0.1:8000/media/${project.image}`}
+                        alt={project.name}
+                        style={{ width: "200px", borderRadius: "8px" }}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -81,3 +81,32 @@ def delete_project(request, project_id):
             return JsonResponse({"error": "Project not found"}, status=404)
             
     return JsonResponse({"error": "DELETE request required"}, status=400)
+
+# api/views.py
+
+@csrf_exempt
+def update_project(request, project_id):
+    if request.method == 'POST':
+        try:
+            # 1. Find the project
+            project = Project.objects.get(id=project_id)
+            
+            # 2. Update the Text Fields
+            project.name = request.POST.get('name')
+            project.language = request.POST.get('language')
+            project.description = request.POST.get('description')
+            
+            # 3. Handle the Image (Only update if a new one was sent)
+            image = request.FILES.get('image')
+            if image:
+                project.image = image
+            
+            # 4. Save Changes
+            project.save()
+            
+            return JsonResponse({"message": "Project updated successfully!"})
+        
+        except Project.DoesNotExist:
+            return JsonResponse({"error": "Project not found"}, status=404)
+
+    return JsonResponse({"error": "POST request required"}, status=400)
