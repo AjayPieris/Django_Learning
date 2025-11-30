@@ -26,7 +26,7 @@ function App() {
 
   // 1. Fetch Projects (Only works if we want it to)
   async function fetchProjects() {
-    const response = await fetch("http://127.0.0.1:8000/hello/");
+    const response = await fetch("https://AjayAR2001.pythonanywhere.com/hello/");
     const data = await response.json();
     setProjects(data);
   }
@@ -39,7 +39,7 @@ function App() {
   async function handleLogin(e) {
     e.preventDefault();
 
-    const response = await fetch("http://127.0.0.1:8000/login/", {
+    const response = await fetch("https://AjayAR2001.pythonanywhere.com/login/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -85,7 +85,7 @@ function App() {
     // 2. Send the package
     // Note: We REMOVED 'Content-Type': 'application/json'
     // The browser sets the correct boundary headers automatically for files.
-    await fetch("http://127.0.0.1:8000/add-project/", {
+    await fetch("https://AjayAR2001.pythonanywhere.com/add-project/", {
       method: "POST",
       body: formData,
     });
@@ -115,7 +115,7 @@ function App() {
     // 1. Ask for confirmation (Safety first!)
     if (confirm("Are you sure you want to delete this?")) {
       // 2. Send the DELETE command to Django
-      await fetch(`http://127.0.0.1:8000/delete-project/${id}/`, {
+      await fetch(`https://AjayAR2001.pythonanywhere.com/delete-project/${id}/`, {
         method: "DELETE",
       });
 
@@ -146,7 +146,7 @@ function App() {
       formData.append("image", projImage);
     }
 
-    await fetch(`http://127.0.0.1:8000/update-project/${editingId}/`, {
+    await fetch(`https://AjayAR2001.pythonanywhere.com/update-project/${editingId}/`, {
       method: "POST",
       body: formData,
     });
@@ -318,13 +318,13 @@ function App() {
                       {isVideo(project.image) ? (
                         <video controls className="card-media">
                           <source
-                            src={`http://127.0.0.1:8000/media/${project.image}`}
+                            src={`https://AjayAR2001.pythonanywhere.com/media/${project.image}`}
                             type="video/mp4"
                           />
                         </video>
                       ) : (
                         <img
-                          src={`http://127.0.0.1:8000/media/${project.image}`}
+                          src={`https://AjayAR2001.pythonanywhere.com/media/${project.image}`}
                           alt={project.name}
                           className="card-media"
                         />
