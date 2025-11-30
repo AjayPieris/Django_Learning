@@ -2,12 +2,13 @@ from django.db import models
 
 # This Class = One Database Table
 class Project(models.Model):
-    name = models.CharField(max_length=200)  # Like "CeylonConnect"
-    language = models.CharField(max_length=100) # Like "Python" or "React"
-    description = models.TextField() # A long text for details
-    # New Field for Images
-    image = models.ImageField(upload_to='project_images/', null=True, blank=True)
+    name = models.CharField(max_length=200)
+    language = models.CharField(max_length=100)
+    description = models.TextField()
+    
+    # OLD: image = models.ImageField(...)
+    # NEW: FileField accepts .mp4, .pdf, .jpg, anything!
+    image = models.FileField(upload_to='project_files/', null=True, blank=True) 
 
-    # This fixes a small display issue we will see later
     def __str__(self):
         return self.name

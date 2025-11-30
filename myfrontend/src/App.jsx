@@ -100,6 +100,14 @@ function App() {
     fetchProjects();
   }
 
+  // Helper to check if a file is a video
+function isVideo(url) {
+  // If no URL, return false
+  if (!url) return false;
+  // Check if it ends with .mp4, .webm, or .ogg
+  return url.toLowerCase().match(/\.(mp4|webm|ogg)$/);
+}
+
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       {/* --- SHOW LOGIN SCREEN IF NOT LOGGED IN --- */}
@@ -197,34 +205,41 @@ function App() {
             </button>
           </div>
 
-          {/* List Projects */}
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              style={{
-                border: "1px solid #ddd",
-                margin: "10px",
-                padding: "10px",
-              }}
-            >
-              <h3>{project.name}</h3>
+         {/* Render projects list */}
+         <div>
+           {projects.map((project) => (
+             <div
+               key={project.id || project.name}
+               style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "8px", marginBottom: "10px" }}
+             >
+               <h4>{project.name}</h4>
+               <p>
+                 <strong>Language:</strong> {project.language}
+               </p>
+               <p>{project.description}</p>
 
-              {/* Show image if it exists */}
-              {project.image && (
-                <img
-                  src={`http://127.0.0.1:8000/media/${project.image}`}
-                  alt={project.name}
-                  style={{ width: "200px", borderRadius: "8px" }}
-                />
-              )}
-
-              <p>
-                <strong>Language:</strong> {project.language}
-              </p>
-              <p>{project.description}</p>
-            </div>
-          ))}
-        </div>
+               {project.image && (
+                 <div style={{ marginTop: "10px" }}>
+                   {/* LOGIC: Is it a video? */}
+                   {isVideo(project.image) ? (
+                     <video controls width="100%" style={{ borderRadius: "8px" }}>
+                       <source src={`http://127.0.0.1:8000/media/${project.image}`} type="video/mp4" />
+                       Your browser does not support the video tag.
+                     </video>
+                   ) : (
+                     /* LOGIC: No? Then it must be an image */
+                     <img
+                       src={`http://127.0.0.1:8000/media/${project.image}`}
+                       alt={project.name}
+                       style={{ width: "200px", borderRadius: "8px" }}
+                     />
+                   )}
+                 </div>
+               )}
+             </div>
+           ))}
+         </div>
+       </div>
       )}
     </div>
   );
